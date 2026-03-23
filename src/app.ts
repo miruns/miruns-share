@@ -121,7 +121,7 @@ function renderSession(): void {
     ${renderHealth(session)}
 
     <footer class="footer">
-      <span class="muted small">Shared via <a href="https://miruns.com" target="_blank" rel="noopener">Miruns</a></span>
+      <span class="muted small">Shared via <a href="https://www.miruns.com" target="_blank" rel="noopener">Miruns</a></span>
     </footer>
   `;
 
