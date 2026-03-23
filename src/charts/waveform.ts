@@ -12,7 +12,7 @@ const COLORS = [
 ];
 
 /**
- * Render multi-channel waveform to a <canvas>.
+ * Render multi-channel waveform to a <canvas> with glow effects.
  * Supports a visible time window [startSec, endSec].
  */
 export function drawWaveform(
@@ -32,7 +32,11 @@ export function drawWaveform(
   canvas.height = h * dpr;
   ctx.scale(dpr, dpr);
 
-  ctx.fillStyle = "#111111";
+  // Dark background with subtle gradient
+  const bgGrad = ctx.createLinearGradient(0, 0, 0, h);
+  bgGrad.addColorStop(0, "#0f1114");
+  bgGrad.addColorStop(1, "#111111");
+  ctx.fillStyle = bgGrad;
   ctx.fillRect(0, 0, w, h);
 
   if (!signal.samples.length || !channels.length) return;
@@ -60,8 +64,27 @@ export function drawWaveform(
   const visibleSamples = signal.samples.slice(iStart, iEnd + 1);
   if (visibleSamples.length < 2) return;
 
+  // Time axis ticks (draw first, behind waveforms)
+  const totalSec = endSec - startSec;
+  const tickInterval =
+    totalSec <= 2 ? 0.5 : totalSec <= 10 ? 1 : totalSec <= 30 ? 5 : 10;
+
+  ctx.strokeStyle = "#ffffff08";
+  ctx.lineWidth = 1;
+  for (
+    let t = Math.ceil(startSec / tickInterval) * tickInterval;
+    t <= endSec;
+    t += tickInterval
+  ) {
+    const x = ((t - startSec) / totalSec) * w;
+    ctx.beginPath();
+    ctx.moveTo(x, 0);
+    ctx.lineTo(x, h);
+    ctx.stroke();
+  }
+
   const laneH = h / channels.length;
-  const margin = 4;
+  const margin = 6;
 
   channels.forEach((chIdx, lane) => {
     const yCenter = lane * laneH + laneH / 2;
@@ -77,18 +100,17 @@ export function drawWaveform(
     }
     const range = max - min || 1;
 
-    // Channel label
-    ctx.fillStyle = COLORS[chIdx % COLORS.length] + "88";
-    ctx.font = "11px 'Geist Mono', ui-monospace, monospace";
-    ctx.fillText(
-      signal.channels[chIdx]?.label ?? `Ch ${chIdx + 1}`,
-      6,
-      lane * laneH + 16,
-    );
+    // Zero line
+    ctx.strokeStyle = "#ffffff06";
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(0, yCenter);
+    ctx.lineTo(w, yCenter);
+    ctx.stroke();
 
     // Lane separator
     if (lane > 0) {
-      ctx.strokeStyle = "#ffffff10";
+      ctx.strokeStyle = "#ffffff0c";
       ctx.lineWidth = 1;
       ctx.beginPath();
       ctx.moveTo(0, lane * laneH);
@@ -96,43 +118,88 @@ export function drawWaveform(
       ctx.stroke();
     }
 
-    // Waveform path
-    ctx.strokeStyle = COLORS[chIdx % COLORS.length];
-    ctx.lineWidth = 1.2;
-    ctx.beginPath();
-
+    const color = COLORS[chIdx % COLORS.length];
     const tRange =
       visibleSamples[visibleSamples.length - 1].t - visibleSamples[0].t;
+
+    // Build the path points
+    const pts: { x: number; y: number }[] = [];
     for (let i = 0; i < visibleSamples.length; i++) {
       const s = visibleSamples[i];
       const x = ((s.t - visibleSamples[0].t) / tRange) * w;
       const v = s.ch[chIdx] ?? 0;
       const y = yCenter - ((v - (min + max) / 2) / range) * drawH;
-      if (i === 0) ctx.moveTo(x, y);
-      else ctx.lineTo(x, y);
+      pts.push({ x, y });
+    }
+
+    // Soft glow under curve (gradient fill from line to center)
+    ctx.beginPath();
+    for (let i = 0; i < pts.length; i++) {
+      if (i === 0) ctx.moveTo(pts[i].x, pts[i].y);
+      else ctx.lineTo(pts[i].x, pts[i].y);
+    }
+    ctx.lineTo(pts[pts.length - 1].x, yCenter);
+    ctx.lineTo(pts[0].x, yCenter);
+    ctx.closePath();
+    const fillGrad = ctx.createLinearGradient(0, yCenter - drawH / 2, 0, yCenter + drawH / 2);
+    fillGrad.addColorStop(0, color + "18");
+    fillGrad.addColorStop(0.5, color + "04");
+    fillGrad.addColorStop(1, color + "18");
+    ctx.fillStyle = fillGrad;
+    ctx.fill();
+
+    // Glow layer (wider, blurred stroke)
+    ctx.save();
+    ctx.shadowColor = color;
+    ctx.shadowBlur = 6;
+    ctx.strokeStyle = color + "44";
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    for (let i = 0; i < pts.length; i++) {
+      if (i === 0) ctx.moveTo(pts[i].x, pts[i].y);
+      else ctx.lineTo(pts[i].x, pts[i].y);
     }
     ctx.stroke();
+    ctx.restore();
+
+    // Sharp waveform line on top
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 1.4;
+    ctx.beginPath();
+    for (let i = 0; i < pts.length; i++) {
+      if (i === 0) ctx.moveTo(pts[i].x, pts[i].y);
+      else ctx.lineTo(pts[i].x, pts[i].y);
+    }
+    ctx.stroke();
+
+    // Channel label with background pill
+    const label = signal.channels[chIdx]?.label ?? `Ch ${chIdx + 1}`;
+    ctx.font = "11px 'Geist Mono', ui-monospace, monospace";
+    const labelW = ctx.measureText(label).width;
+    ctx.fillStyle = "#111111cc";
+    ctx.beginPath();
+    ctx.roundRect(4, lane * laneH + 5, labelW + 12, 18, 4);
+    ctx.fill();
+    ctx.fillStyle = color;
+    ctx.fillText(label, 10, lane * laneH + 18);
+
+    // Scale indicator (µV range)
+    const unit = signal.channels[chIdx]?.unit ?? "µV";
+    const scaleLabel = `${range.toFixed(1)} ${unit}`;
+    ctx.fillStyle = "#ffffff30";
+    ctx.font = "9px 'Geist Mono', ui-monospace, monospace";
+    ctx.fillText(scaleLabel, 10, lane * laneH + 32);
   });
 
-  // Time axis ticks
-  const totalSec = endSec - startSec;
-  const tickInterval =
-    totalSec <= 2 ? 0.5 : totalSec <= 10 ? 1 : totalSec <= 30 ? 5 : 10;
+  // Time axis labels (on top)
   ctx.fillStyle = "#ffffff40";
   ctx.font = "10px 'Geist Mono', ui-monospace, monospace";
-  ctx.strokeStyle = "#ffffff10";
-  ctx.lineWidth = 1;
-
   for (
     let t = Math.ceil(startSec / tickInterval) * tickInterval;
     t <= endSec;
     t += tickInterval
   ) {
     const x = ((t - startSec) / totalSec) * w;
-    ctx.beginPath();
-    ctx.moveTo(x, 0);
-    ctx.lineTo(x, h);
-    ctx.stroke();
     ctx.fillText(`${t.toFixed(1)}s`, x + 3, h - 4);
   }
 }

@@ -33,6 +33,3 @@ npm run dev
 3. Signal data is parsed and rendered to `<canvas>` elements client-side
 4. FFT and PSD are computed in the browser — no server-side processing
 
-## Brand
-
-Design follows the [miruns-brand](https://github.com/miruns/miruns-brand) system: Geist typeface, `#0A0A0A` dark background, `#00E5FF` cyan accent, pill-shaped controls, and the M signal mark.

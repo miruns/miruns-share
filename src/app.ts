@@ -1,6 +1,9 @@
 import { fetchSession, NotFoundError } from "./api";
 import { drawBands } from "./charts/bands";
+import { drawRadar } from "./charts/radar";
+import { drawSpectrogram } from "./charts/spectrogram";
 import { drawSpectrum } from "./charts/spectrum";
+import { drawTimeline } from "./charts/timeline";
 import { drawWaveform } from "./charts/waveform";
 import type { ParsedSession, SignalSession } from "./types";
 
@@ -129,7 +132,7 @@ function renderSession(): void {
 
 function renderSignalCharts(_s: SignalSession): string {
   return `
-    <section class="chart-section">
+    <section class="chart-section fade-in">
       <div class="section-head">
         <h2>Waveform</h2>
         <div class="channel-toggles" id="ch-toggles"></div>
@@ -149,7 +152,16 @@ function renderSignalCharts(_s: SignalSession): string {
       </div>
     </section>
 
-    <section class="chart-section row">
+    <section class="chart-section fade-in" style="animation-delay:.1s">
+      <div class="section-head">
+        <h2>Spectrogram</h2>
+        <span class="chart-hint">Time-frequency analysis (STFT)</span>
+        <select id="spectrogram-ch-select" class="ch-select"></select>
+      </div>
+      <canvas id="spectrogram-canvas" class="chart-canvas tall"></canvas>
+    </section>
+
+    <section class="chart-section row fade-in" style="animation-delay:.2s">
       <div class="chart-half">
         <div class="section-head">
           <h2>Spectrum</h2>
@@ -163,6 +175,24 @@ function renderSignalCharts(_s: SignalSession): string {
           <select id="bands-ch-select" class="ch-select"></select>
         </div>
         <canvas id="bands-canvas" class="chart-canvas"></canvas>
+      </div>
+    </section>
+
+    <section class="chart-section row fade-in" style="animation-delay:.3s">
+      <div class="chart-half">
+        <div class="section-head">
+          <h2>Band Radar</h2>
+          <select id="radar-ch-select" class="ch-select"></select>
+        </div>
+        <canvas id="radar-canvas" class="chart-canvas square"></canvas>
+      </div>
+      <div class="chart-half">
+        <div class="section-head">
+          <h2>Band Timeline</h2>
+          <span class="chart-hint">Power evolution over time</span>
+          <select id="timeline-ch-select" class="ch-select"></select>
+        </div>
+        <canvas id="timeline-canvas" class="chart-canvas"></canvas>
       </div>
     </section>
   `;
@@ -237,27 +267,33 @@ function setupInteractions(s: SignalSession): void {
     togglesEl.appendChild(btn);
   });
 
-  // Channel selects for spectrum + bands
-  const specSelect = document.getElementById(
+  // All channel selects (spectrum, bands, spectrogram, radar, timeline)
+  const channelSelects = [
     "spectrum-ch-select",
-  ) as HTMLSelectElement;
-  const bandsSelect = document.getElementById(
     "bands-ch-select",
-  ) as HTMLSelectElement;
-  s.channels.forEach((ch, i) => {
-    specSelect.add(new Option(ch.label, String(i)));
-    bandsSelect.add(new Option(ch.label, String(i)));
-  });
-  specSelect.addEventListener("change", () => {
-    selectedChannel = parseInt(specSelect.value);
-    bandsSelect.value = specSelect.value;
-    redrawAnalysis(s);
-  });
-  bandsSelect.addEventListener("change", () => {
-    selectedChannel = parseInt(bandsSelect.value);
-    specSelect.value = bandsSelect.value;
-    redrawAnalysis(s);
-  });
+    "spectrogram-ch-select",
+    "radar-ch-select",
+    "timeline-ch-select",
+  ];
+  const selectEls: HTMLSelectElement[] = [];
+  for (const id of channelSelects) {
+    const el = document.getElementById(id) as HTMLSelectElement | null;
+    if (el) {
+      s.channels.forEach((ch, i) => el.add(new Option(ch.label, String(i))));
+      selectEls.push(el);
+    }
+  }
+
+  // Sync all channel selects
+  for (const el of selectEls) {
+    el.addEventListener("change", () => {
+      selectedChannel = parseInt(el.value);
+      for (const other of selectEls) {
+        if (other !== el) other.value = el.value;
+      }
+      redrawAnalysis(s);
+    });
+  }
 
   // Time navigation
   const slider = document.getElementById("time-slider") as HTMLInputElement;
@@ -340,8 +376,21 @@ function redrawAnalysis(s: SignalSession): void {
   const bandsCanvas = document.getElementById(
     "bands-canvas",
   ) as HTMLCanvasElement | null;
+  const spectrogramCanvas = document.getElementById(
+    "spectrogram-canvas",
+  ) as HTMLCanvasElement | null;
+  const radarCanvas = document.getElementById(
+    "radar-canvas",
+  ) as HTMLCanvasElement | null;
+  const timelineCanvas = document.getElementById(
+    "timeline-canvas",
+  ) as HTMLCanvasElement | null;
+
   if (specCanvas) drawSpectrum(specCanvas, s, selectedChannel);
   if (bandsCanvas) drawBands(bandsCanvas, s, selectedChannel);
+  if (spectrogramCanvas) drawSpectrogram(spectrogramCanvas, s, selectedChannel);
+  if (radarCanvas) drawRadar(radarCanvas, s, selectedChannel);
+  if (timelineCanvas) drawTimeline(timelineCanvas, s, selectedChannel);
 }
 
 // ── Utilities ──────────────────────────────────────────────────────────────

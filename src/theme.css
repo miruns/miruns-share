@@ -77,6 +77,16 @@ body {
   height: auto;
   margin-bottom: 4px;
   filter: drop-shadow(0 0 24px rgba(0, 210, 255, 0.3));
+  animation: pulse-glow 3s ease-in-out infinite;
+}
+
+@keyframes pulse-glow {
+  0%, 100% {
+    filter: drop-shadow(0 0 24px rgba(0, 210, 255, 0.3));
+  }
+  50% {
+    filter: drop-shadow(0 0 36px rgba(0, 210, 255, 0.5)) drop-shadow(0 0 60px rgba(157, 80, 187, 0.15));
+  }
 }
 
 .landing h1 {
@@ -117,8 +127,10 @@ body {
   height: 36px;
   border: 2.5px solid var(--border);
   border-top-color: var(--accent);
+  border-right-color: rgba(157, 80, 187, 0.5);
   border-radius: 50%;
   animation: spin 0.9s linear infinite;
+  box-shadow: 0 0 16px var(--accent-glow);
 }
 
 @keyframes spin {
@@ -138,6 +150,7 @@ body {
   padding-bottom: 20px;
   border-bottom: 1px solid var(--border);
   margin-bottom: 20px;
+  animation: fade-in 0.4s ease-out both;
 }
 
 .header-left h1 {
@@ -188,6 +201,12 @@ body {
   padding: 12px 14px;
   border-radius: var(--radius-sm);
   border: 1px solid var(--border);
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.meta-grid .meta-item:hover {
+  border-color: #333;
+  box-shadow: 0 0 16px rgba(0, 229, 255, 0.04);
 }
 
 /* ── Tags ───────────────────────────────────────────────────────────────── */
@@ -207,6 +226,12 @@ body {
   font-size: 0.75rem;
   font-family: var(--font-mono);
   letter-spacing: 0.02em;
+  transition: background 0.2s, box-shadow 0.2s;
+}
+
+.tag:hover {
+  background: rgba(0, 229, 255, 0.18);
+  box-shadow: 0 0 12px rgba(0, 229, 255, 0.1);
 }
 
 /* ── Note ───────────────────────────────────────────────────────────────── */
@@ -225,6 +250,23 @@ body {
   margin-right: 8px;
 }
 
+/* ── Animations ─────────────────────────────────────────────────────────── */
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.fade-in {
+  animation: fade-in 0.5s ease-out both;
+}
+
 /* ── Chart sections ─────────────────────────────────────────────────────── */
 
 .chart-section {
@@ -233,11 +275,32 @@ body {
   border-radius: var(--radius);
   padding: 20px;
   margin-bottom: 16px;
-  transition: border-color 0.2s;
+  transition: border-color 0.3s, box-shadow 0.3s;
+  position: relative;
+}
+
+.chart-section::before {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: var(--radius);
+  padding: 1px;
+  background: linear-gradient(135deg, transparent 40%, var(--accent-dim) 100%);
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  opacity: 0;
+  transition: opacity 0.3s;
+  pointer-events: none;
 }
 
 .chart-section:hover {
   border-color: #333333;
+  box-shadow: 0 0 30px rgba(0, 229, 255, 0.03);
+}
+
+.chart-section:hover::before {
+  opacity: 1;
 }
 
 .chart-section h2 {
@@ -256,6 +319,13 @@ body {
   gap: 8px;
 }
 
+.chart-hint {
+  font-size: 0.72rem;
+  color: var(--muted);
+  font-family: var(--font-mono);
+  opacity: 0.6;
+}
+
 .chart-canvas {
   width: 100%;
   height: 220px;
@@ -265,6 +335,10 @@ body {
 
 .chart-canvas.tall {
   height: 360px;
+}
+
+.chart-canvas.square {
+  height: 280px;
 }
 
 .row {
@@ -457,6 +531,10 @@ select:focus {
 
   .chart-canvas.tall {
     height: 280px;
+  }
+
+  .chart-canvas.square {
+    height: 240px;
   }
 
   .landing h1 {

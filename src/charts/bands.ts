@@ -4,6 +4,7 @@ import { EEG_BANDS } from "../types";
 
 /**
  * Draw horizontal bar chart showing EEG band power distribution for a channel.
+ * Enhanced with gradient bars and glow effects.
  */
 export function drawBands(
   canvas: HTMLCanvasElement,
@@ -20,7 +21,10 @@ export function drawBands(
   canvas.height = h * dpr;
   ctx.scale(dpr, dpr);
 
-  ctx.fillStyle = "#111111";
+  const bgGrad = ctx.createLinearGradient(0, 0, 0, h);
+  bgGrad.addColorStop(0, "#0f1114");
+  bgGrad.addColorStop(1, "#111111");
+  ctx.fillStyle = bgGrad;
   ctx.fillRect(0, 0, w, h);
 
   if (signal.samples.length < 64) return;
@@ -65,40 +69,85 @@ export function drawBands(
     totalPower > 0 ? (p / totalPower) * 100 : 0,
   );
 
-  const padLeft = 60;
-  const padRight = 48;
-  const padTop = 8;
-  const barHeight = Math.min(28, (h - padTop - 8) / bands.length - 6);
+  const padLeft = 64;
+  const padRight = 56;
+  const padTop = 12;
+  const barHeight = Math.min(32, (h - padTop - 12) / bands.length - 8);
   const maxBarW = w - padLeft - padRight;
 
+  // Find dominant band
+  let maxIdx = 0;
+  for (let i = 1; i < percents.length; i++) {
+    if (percents[i] > percents[maxIdx]) maxIdx = i;
+  }
+
   bands.forEach(([name, band], i) => {
-    const y = padTop + i * (barHeight + 6);
+    const y = padTop + i * (barHeight + 8);
     const barW = (percents[i] / 100) * maxBarW;
 
-    // Bar background
-    ctx.fillStyle = "#ffffff0a";
+    // Bar background with subtle border
+    ctx.fillStyle = "#ffffff06";
     ctx.beginPath();
-    ctx.roundRect(padLeft, y, maxBarW, barHeight, 4);
+    ctx.roundRect(padLeft, y, maxBarW, barHeight, 6);
+    ctx.fill();
+    ctx.strokeStyle = "#ffffff08";
+    ctx.lineWidth = 0.5;
+    ctx.beginPath();
+    ctx.roundRect(padLeft, y, maxBarW, barHeight, 6);
+    ctx.stroke();
+
+    // Bar fill with gradient
+    const barGrad = ctx.createLinearGradient(padLeft, 0, padLeft + barW, 0);
+    barGrad.addColorStop(0, band.color + "dd");
+    barGrad.addColorStop(1, band.color + "88");
+    ctx.fillStyle = barGrad;
+    ctx.beginPath();
+    ctx.roundRect(padLeft, y, Math.max(barW, 2), barHeight, 6);
     ctx.fill();
 
-    // Bar fill
-    ctx.fillStyle = band.color + "cc";
-    ctx.beginPath();
-    ctx.roundRect(padLeft, y, Math.max(barW, 2), barHeight, 4);
-    ctx.fill();
+    // Glow on dominant band
+    if (i === maxIdx) {
+      ctx.save();
+      ctx.shadowColor = band.color;
+      ctx.shadowBlur = 10;
+      ctx.fillStyle = band.color + "44";
+      ctx.beginPath();
+      ctx.roundRect(padLeft, y, Math.max(barW, 2), barHeight, 6);
+      ctx.fill();
+      ctx.restore();
+    }
 
-    // Label
-    ctx.fillStyle = "#EDEDED";
-    ctx.font = "11px 'Geist Mono', ui-monospace, monospace";
+    // Band label (full name with Greek letter)
+    ctx.fillStyle = i === maxIdx ? "#EDEDED" : "#bbbbbb";
+    ctx.font = i === maxIdx
+      ? "bold 11px 'Geist Mono', ui-monospace, monospace"
+      : "11px 'Geist Mono', ui-monospace, monospace";
     ctx.textBaseline = "middle";
     ctx.fillText(name, 4, y + barHeight / 2);
 
-    // Percentage
-    ctx.fillStyle = "#888888";
+    // Frequency range
+    ctx.fillStyle = "#ffffff25";
+    ctx.font = "8px 'Geist Mono', ui-monospace, monospace";
+    ctx.fillText(
+      `${band.range[0]}–${band.range[1]}Hz`,
+      4,
+      y + barHeight / 2 + 12,
+    );
+
+    // Percentage with glow for dominant
+    if (i === maxIdx) {
+      ctx.fillStyle = band.color;
+      ctx.font = "bold 12px 'Geist Mono', ui-monospace, monospace";
+    } else {
+      ctx.fillStyle = "#999999";
+      ctx.font = "11px 'Geist Mono', ui-monospace, monospace";
+    }
     ctx.fillText(
       `${percents[i].toFixed(1)}%`,
       padLeft + maxBarW + 6,
       y + barHeight / 2,
     );
   });
+
+  ctx.textBaseline = "alphabetic";
 }
