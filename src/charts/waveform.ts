@@ -1,8 +1,8 @@
 import type { SignalSession } from "../types";
 
 const COLORS = [
+  "#00E5FF",
   "#4ade80",
-  "#22d3ee",
   "#a78bfa",
   "#facc15",
   "#f472b6",
@@ -32,7 +32,7 @@ export function drawWaveform(
   canvas.height = h * dpr;
   ctx.scale(dpr, dpr);
 
-  ctx.fillStyle = "#0a0f1a";
+  ctx.fillStyle = "#111111";
   ctx.fillRect(0, 0, w, h);
 
   if (!signal.samples.length || !channels.length) return;
@@ -79,7 +79,7 @@ export function drawWaveform(
 
     // Channel label
     ctx.fillStyle = COLORS[chIdx % COLORS.length] + "88";
-    ctx.font = "11px 'GeistMono', monospace";
+    ctx.font = "11px 'Geist Mono', ui-monospace, monospace";
     ctx.fillText(
       signal.channels[chIdx]?.label ?? `Ch ${chIdx + 1}`,
       6,
@@ -119,7 +119,7 @@ export function drawWaveform(
   const tickInterval =
     totalSec <= 2 ? 0.5 : totalSec <= 10 ? 1 : totalSec <= 30 ? 5 : 10;
   ctx.fillStyle = "#ffffff40";
-  ctx.font = "10px 'GeistMono', monospace";
+  ctx.font = "10px 'Geist Mono', ui-monospace, monospace";
   ctx.strokeStyle = "#ffffff10";
   ctx.lineWidth = 1;
 

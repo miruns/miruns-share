@@ -21,7 +21,7 @@ export function drawSpectrum(
   canvas.height = h * dpr;
   ctx.scale(dpr, dpr);
 
-  ctx.fillStyle = "#0a0f1a";
+  ctx.fillStyle = "#111111";
   ctx.fillRect(0, 0, w, h);
 
   if (signal.samples.length < 64) return;
@@ -76,7 +76,7 @@ export function drawSpectrum(
   }
 
   // Spectrum line
-  ctx.strokeStyle = "#4ade80";
+  ctx.strokeStyle = "#00E5FF";
   ctx.lineWidth = 1.5;
   ctx.beginPath();
   for (let i = 0; i < maxBin; i++) {
@@ -92,12 +92,12 @@ export function drawSpectrum(
   ctx.lineTo(lastX, 8 + plotH);
   ctx.lineTo(padLeft, 8 + plotH);
   ctx.closePath();
-  ctx.fillStyle = "#4ade8015";
+  ctx.fillStyle = "#00E5FF10";
   ctx.fill();
 
   // X-axis labels
   ctx.fillStyle = "#ffffff50";
-  ctx.font = "10px 'GeistMono', monospace";
+  ctx.font = "10px 'Geist Mono', ui-monospace, monospace";
   const freqStep = maxFreqHz <= 30 ? 5 : 10;
   for (let f = 0; f <= maxFreqHz; f += freqStep) {
     const x = padLeft + (f / maxFreqHz) * plotW;
@@ -110,7 +110,7 @@ export function drawSpectrum(
   for (let db = Math.ceil(minDb / dbStep) * dbStep; db <= maxDb; db += dbStep) {
     const y = 8 + plotH - ((db - minDb) / (maxDb - minDb)) * plotH;
     ctx.fillText(`${db.toFixed(0)}`, 4, y + 3);
-    ctx.strokeStyle = "#ffffff10";
+    ctx.strokeStyle = "#ffffff08";
     ctx.lineWidth = 0.5;
     ctx.beginPath();
     ctx.moveTo(padLeft, y);

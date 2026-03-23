@@ -20,7 +20,7 @@ export function drawBands(
   canvas.height = h * dpr;
   ctx.scale(dpr, dpr);
 
-  ctx.fillStyle = "#0a0f1a";
+  ctx.fillStyle = "#111111";
   ctx.fillRect(0, 0, w, h);
 
   if (signal.samples.length < 64) return;
@@ -28,7 +28,6 @@ export function drawBands(
   const sr = signal.sample_rate_hz;
   const nfft = nextPow2(Math.min(signal.samples.length, 1024));
   const halfN = nfft >> 1;
-  const fRes = sr / nfft;
 
   // Average PSD over overlapping windows
   const step = nfft >> 1;
@@ -56,7 +55,7 @@ export function drawBands(
   const powers: number[] = [];
   let totalPower = 0;
   for (const [, band] of bands) {
-    const bp = bandPower(avgPsd, fRes, band.range[0], band.range[1]);
+    const bp = bandPower(avgPsd, sr, band.range[0], band.range[1]);
     powers.push(bp);
     totalPower += bp;
   }
@@ -77,7 +76,7 @@ export function drawBands(
     const barW = (percents[i] / 100) * maxBarW;
 
     // Bar background
-    ctx.fillStyle = "#ffffff08";
+    ctx.fillStyle = "#ffffff0a";
     ctx.beginPath();
     ctx.roundRect(padLeft, y, maxBarW, barHeight, 4);
     ctx.fill();
@@ -89,13 +88,13 @@ export function drawBands(
     ctx.fill();
 
     // Label
-    ctx.fillStyle = "#e2e8f0";
-    ctx.font = "11px 'GeistMono', monospace";
+    ctx.fillStyle = "#EDEDED";
+    ctx.font = "11px 'Geist Mono', ui-monospace, monospace";
     ctx.textBaseline = "middle";
     ctx.fillText(name, 4, y + barHeight / 2);
 
     // Percentage
-    ctx.fillStyle = "#94a3b8";
+    ctx.fillStyle = "#888888";
     ctx.fillText(
       `${percents[i].toFixed(1)}%`,
       padLeft + maxBarW + 6,

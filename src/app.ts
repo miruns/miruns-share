@@ -63,9 +63,19 @@ function showError(title: string, detail: string): void {
 function showLanding(): void {
   app().innerHTML = `
     <div class="state-screen landing">
+      <svg class="landing-logo" viewBox="0 0 100 82" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="g-msignal" x1="0" y1="40" x2="100" y2="40" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stop-color="#00D2FF"/>
+            <stop offset="100%" stop-color="#9D50BB"/>
+          </linearGradient>
+        </defs>
+        <path d="M 0 56 C 7 56, 10 10, 22 10 C 34 10, 42 72, 50 72 C 58 72, 66 10, 78 10 C 90 10, 93 56, 100 56"
+              stroke="url(#g-msignal)" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+      </svg>
       <h1>miruns<span class="accent">share</span></h1>
-      <p class="muted">View shared EEG sessions from the Miruns app.</p>
-      <p class="muted small">Paste a shared link in the address bar to get started.</p>
+      <p class="tagline">View shared EEG sessions from the Miruns app.</p>
+      <p class="hint">Paste a shared link in the address bar to get started.</p>
     </div>`;
 }
 
@@ -337,8 +347,8 @@ function redrawAnalysis(s: SignalSession): void {
 // ── Utilities ──────────────────────────────────────────────────────────────
 
 const COLORS = [
+  "#00E5FF",
   "#4ade80",
-  "#22d3ee",
   "#a78bfa",
   "#facc15",
   "#f472b6",
