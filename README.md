@@ -2,7 +2,8 @@
 
 Lightweight EEG session viewer for shared Miruns sessions. Paste a share link to visualize waveforms, frequency spectrum, and band power — all client-side.
 
-<img width="959" height="951" alt="miruns share screenshot" src="https://github.com/user-attachments/assets/8e3afde6-454c-49dc-8405-a9c6081a3798" />
+<img width="1151" height="960" alt="image" src="https://github.com/user-attachments/assets/8a91dfae-0159-42ba-afca-59831f8a8dfa" />
+
 
 ## Features
 
