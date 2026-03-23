@@ -28,7 +28,6 @@ export function drawTimeline(
 
   const sr = signal.sample_rate_hz;
   const windowSize = nextPow2(Math.min(256, signal.samples.length));
-  const halfN = windowSize >> 1;
   const step = windowSize >> 1; // 50% overlap
 
   const bands = Object.entries(EEG_BANDS);
