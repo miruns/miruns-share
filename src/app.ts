@@ -72,8 +72,8 @@ function showLanding(): void {
         </defs>
         <path d="M 0 56 C 7 56, 10 10, 22 10 C 34 10, 42 72, 50 72 C 58 72, 66 10, 78 10 C 90 10, 93 56, 100 56"
               stroke="url(#g-msignal)" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-      </svg>
-      <h1>miruns<span class="accent">share</span></h1>
+      </svg><span class="accent">share</span>
+      <h1>miruns</h1>
       <p class="tagline">View shared EEG sessions from the Miruns app.</p>
       <p class="hint">Paste a shared link in the address bar to get started.</p>
     </div>`;
