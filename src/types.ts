@@ -60,10 +60,21 @@ export interface ParsedSession {
   captureId: string;
   timestamp: Date;
   tags: string[];
+  triggers: string[];
+  artifacts: string[];
   signal: SignalSession;
   healthData?: Record<string, unknown>;
   environmentData?: Record<string, unknown>;
   userNote?: string;
+  userMood?: string;
+}
+
+// ── Event markers ──────────────────────────────────────────────────────────
+
+export interface EventMarker {
+  sampleIdx: number;
+  label: string;
+  kind: "trigger" | "artifact";
 }
 
 // ── EEG frequency bands ────────────────────────────────────────────────────

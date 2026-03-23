@@ -234,6 +234,26 @@ body {
   box-shadow: 0 0 12px rgba(0, 229, 255, 0.1);
 }
 
+.tag-trigger {
+  background: rgba(250, 204, 21, 0.12);
+  color: #facc15;
+}
+
+.tag-trigger:hover {
+  background: rgba(250, 204, 21, 0.2);
+  box-shadow: 0 0 12px rgba(250, 204, 21, 0.1);
+}
+
+.tag-artifact {
+  background: rgba(244, 114, 182, 0.12);
+  color: #f472b6;
+}
+
+.tag-artifact:hover {
+  background: rgba(244, 114, 182, 0.2);
+  box-shadow: 0 0 12px rgba(244, 114, 182, 0.1);
+}
+
 /* ── Note ───────────────────────────────────────────────────────────────── */
 
 .note {

@@ -5,7 +5,7 @@ import { drawSpectrogram } from "./charts/spectrogram";
 import { drawSpectrum } from "./charts/spectrum";
 import { drawTimeline } from "./charts/timeline";
 import { drawWaveform } from "./charts/waveform";
-import type { ParsedSession, SignalSession } from "./types";
+import type { EventMarker, ParsedSession, SignalSession } from "./types";
 
 // ── State ──────────────────────────────────────────────────────────────────
 
@@ -15,6 +15,7 @@ let selectedChannel = 0;
 let viewStart = 0;
 let viewEnd = 10;
 let totalDuration = 0;
+let eventMarkers: EventMarker[] = [];
 
 // ── Router ─────────────────────────────────────────────────────────────────
 
@@ -91,6 +92,9 @@ function renderSession(): void {
   activeChannels = s.channels.map((_, i) => i);
   selectedChannel = 0;
 
+  // Parse event markers from triggers/artifacts
+  eventMarkers = parseEventMarkers(session.triggers, session.artifacts);
+
   // Total duration
   if (hasSamples) {
     totalDuration = (s.samples[s.samples.length - 1].t - s.samples[0].t) / 1e6;
@@ -114,6 +118,9 @@ function renderSession(): void {
     </header>
 
     ${session.tags.length ? `<div class="tags">${session.tags.map((t) => `<span class="tag">${esc(t)}</span>`).join("")}</div>` : ""}
+    ${session.triggers.length ? `<div class="tags">${session.triggers.map((t) => `<span class="tag tag-trigger">${esc(t)}</span>`).join("")}</div>` : ""}
+    ${session.artifacts.length ? `<div class="tags">${session.artifacts.map((t) => `<span class="tag tag-artifact">${esc(t)}</span>`).join("")}</div>` : ""}
+    ${session.userMood ? `<div class="note"><span class="label">Mood</span> ${esc(session.userMood)}</div>` : ""}
     ${session.userNote ? `<div class="note"><span class="label">Note</span> ${esc(session.userNote)}</div>` : ""}
 
     ${hasSamples ? renderSignalCharts(s) : renderMetaOnly(s)}
@@ -366,7 +373,7 @@ function redrawWaveform(s: SignalSession): void {
   const canvas = document.getElementById(
     "waveform-canvas",
   ) as HTMLCanvasElement | null;
-  if (canvas) drawWaveform(canvas, s, activeChannels, viewStart, viewEnd);
+  if (canvas) drawWaveform(canvas, s, activeChannels, viewStart, viewEnd, eventMarkers);
 }
 
 function redrawAnalysis(s: SignalSession): void {
@@ -388,9 +395,9 @@ function redrawAnalysis(s: SignalSession): void {
 
   if (specCanvas) drawSpectrum(specCanvas, s, selectedChannel);
   if (bandsCanvas) drawBands(bandsCanvas, s, selectedChannel);
-  if (spectrogramCanvas) drawSpectrogram(spectrogramCanvas, s, selectedChannel);
+  if (spectrogramCanvas) drawSpectrogram(spectrogramCanvas, s, selectedChannel, 60, eventMarkers);
   if (radarCanvas) drawRadar(radarCanvas, s, selectedChannel);
-  if (timelineCanvas) drawTimeline(timelineCanvas, s, selectedChannel);
+  if (timelineCanvas) drawTimeline(timelineCanvas, s, selectedChannel, eventMarkers);
 }
 
 // ── Utilities ──────────────────────────────────────────────────────────────
@@ -408,6 +415,25 @@ const COLORS = [
 
 function app(): HTMLElement {
   return document.getElementById("app")!;
+}
+
+function parseEventMarkers(triggers: string[], artifacts: string[]): EventMarker[] {
+  const markers: EventMarker[] = [];
+  for (const t of triggers) {
+    const idx = t.indexOf(":");
+    if (idx >= 0) {
+      const si = parseInt(t.substring(0, idx));
+      if (!isNaN(si)) markers.push({ sampleIdx: si, label: t.substring(idx + 1), kind: "trigger" });
+    }
+  }
+  for (const a of artifacts) {
+    const idx = a.indexOf(":");
+    if (idx >= 0) {
+      const si = parseInt(a.substring(0, idx));
+      if (!isNaN(si)) markers.push({ sampleIdx: si, label: a.substring(idx + 1), kind: "artifact" });
+    }
+  }
+  return markers;
 }
 
 function esc(s: string): string {

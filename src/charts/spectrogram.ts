@@ -1,5 +1,5 @@
 import { fft, hanningWindow, nextPow2, psd } from "../fft";
-import type { SignalSession } from "../types";
+import type { EventMarker, SignalSession } from "../types";
 import { EEG_BANDS } from "../types";
 
 /**
@@ -43,6 +43,7 @@ export function drawSpectrogram(
   signal: SignalSession,
   channelIdx: number,
   maxFreqHz = 60,
+  markers?: EventMarker[],
 ): void {
   const ctx = canvas.getContext("2d");
   if (!ctx) return;
@@ -207,4 +208,42 @@ export function drawSpectrogram(
   ctx.fillText(`${globalMax.toFixed(0)}`, cbX + cbW + 4, padTop + 8);
   ctx.fillText(`${globalMin.toFixed(0)}`, cbX + cbW + 4, padTop + cbH);
   ctx.fillText("dB", cbX + cbW + 4, padTop + cbH / 2 + 3);
+
+  // Event markers
+  if (markers?.length) {
+    const totalTimeSec2 = (totalSamples - 1) / sr;
+    for (const m of markers) {
+      const markerSec = m.sampleIdx / sr;
+      if (markerSec < 0 || markerSec > totalTimeSec2) continue;
+      const x = padLeft + (markerSec / totalTimeSec2) * plotW;
+      const color = m.kind === "trigger" ? "#facc15" : "#f472b6";
+
+      ctx.save();
+      ctx.setLineDash([3, 3]);
+      ctx.strokeStyle = color + "aa";
+      ctx.lineWidth = 1.5;
+      ctx.shadowColor = color;
+      ctx.shadowBlur = 4;
+      ctx.beginPath();
+      ctx.moveTo(x, padTop);
+      ctx.lineTo(x, padTop + plotH);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.restore();
+
+      // Label at top
+      ctx.font = "9px 'Geist Mono', ui-monospace, monospace";
+      const labelW = ctx.measureText(m.label).width;
+      const px = Math.max(padLeft, Math.min(x - labelW / 2 - 5, padLeft + plotW - labelW - 12));
+      ctx.fillStyle = "#111111dd";
+      ctx.strokeStyle = color + "88";
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.roundRect(px, padTop - 14, labelW + 10, 13, 3);
+      ctx.fill();
+      ctx.stroke();
+      ctx.fillStyle = color;
+      ctx.fillText(m.label, px + 5, padTop - 4);
+    }
+  }
 }

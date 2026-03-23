@@ -1,4 +1,4 @@
-import type { SignalSession } from "../types";
+import type { EventMarker, SignalSession } from "../types";
 
 const COLORS = [
   "#00E5FF",
@@ -21,6 +21,7 @@ export function drawWaveform(
   channels: number[],
   startSec: number,
   endSec: number,
+  markers?: EventMarker[],
 ): void {
   const ctx = canvas.getContext("2d");
   if (!ctx) return;
@@ -201,5 +202,44 @@ export function drawWaveform(
   ) {
     const x = ((t - startSec) / totalSec) * w;
     ctx.fillText(`${t.toFixed(1)}s`, x + 3, h - 4);
+  }
+
+  // Event markers (triggers & artifacts)
+  if (markers?.length) {
+    const sr = signal.sample_rate_hz;
+    for (const m of markers) {
+      const markerSec = m.sampleIdx / sr;
+      if (markerSec < startSec || markerSec > endSec) continue;
+      const x = ((markerSec - startSec) / totalSec) * w;
+      const color = m.kind === "trigger" ? "#facc15" : "#f472b6";
+
+      // Dashed vertical line with glow
+      ctx.save();
+      ctx.setLineDash([4, 4]);
+      ctx.strokeStyle = color + "88";
+      ctx.lineWidth = 1.5;
+      ctx.shadowColor = color;
+      ctx.shadowBlur = 6;
+      ctx.beginPath();
+      ctx.moveTo(x, 16);
+      ctx.lineTo(x, h - 16);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.restore();
+
+      // Label pill at top
+      ctx.font = "9px 'Geist Mono', ui-monospace, monospace";
+      const labelW = ctx.measureText(m.label).width;
+      const px = Math.max(2, Math.min(x - labelW / 2 - 5, w - labelW - 12));
+      ctx.fillStyle = "#111111dd";
+      ctx.strokeStyle = color + "88";
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.roundRect(px, 2, labelW + 10, 14, 3);
+      ctx.fill();
+      ctx.stroke();
+      ctx.fillStyle = color;
+      ctx.fillText(m.label, px + 5, 12);
+    }
   }
 }

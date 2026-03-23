@@ -30,10 +30,16 @@ function parseSession(raw: SessionResponse): ParsedSession {
     /* empty */
   }
 
-  // Filter out system tags (artifact:, event:)
+  // Separate user tags from system tags
   const userTags = tags.filter(
     (t) => !t.startsWith("artifact:") && !t.startsWith("event:"),
   );
+  const triggers = tags
+    .filter((t) => t.startsWith("event:"))
+    .map((t) => t.slice(6));
+  const artifacts = tags
+    .filter((t) => t.startsWith("artifact:"))
+    .map((t) => t.slice(9));
 
   // Parse double-encoded optional fields
   const healthData = safeParse(d.health_data);
@@ -46,10 +52,13 @@ function parseSession(raw: SessionResponse): ParsedSession {
     captureId: d.id,
     timestamp: new Date(d.timestamp),
     tags: userTags,
+    triggers,
+    artifacts,
     signal,
     healthData,
     environmentData,
     userNote: d.user_note || undefined,
+    userMood: d.user_mood || undefined,
   };
 }
 
